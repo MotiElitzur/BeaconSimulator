@@ -19,9 +19,9 @@ manager = BeaconManager()
 
 def init_db():
     conn = get_db_connection()                 
-    conn.execute('''CREATE TABLE IF NOT EXISTS events (
+    conn.execute('''CREATE TABLE IF NOT EXISTS commands (
                         id INTEGER PRIMARY KEY,
-                        events TEXT,
+                        commands TEXT,
                         is_repetitive INTEGER DEFAULT 0,
                         timestamp TEXT)''')
     
@@ -30,51 +30,60 @@ def init_db():
     Logger().info("HttpServer initialized")
 
 
-def load_and_process_latest_events():
+def load_and_process_latest_commands():
     conn = get_db_connection()
-    entry = conn.execute('SELECT * FROM events ORDER BY id DESC LIMIT 1').fetchone()
+    entry = conn.execute('SELECT * FROM commands ORDER BY id DESC LIMIT 1').fetchone()
     conn.close()
     if entry:
-        events_data = json.loads(entry['events'])
+        commands_data = json.loads(entry['commands'])
         is_repetitive = bool(entry['is_repetitive'])  # Convert integer to boolean
-        manager.update_events(events_data, is_repetitive)
+        manager.update_commands(commands_data, is_repetitive)
     else:
-        Logger().debug("load_and_process_latest_events No events found in the database.")
+        Logger().debug("load_and_process_latest_commands No commands found in the database.")
 
 
-@flask.route('/command', methods=['POST'])
+@flask.route('/set_data', methods=['POST'])
 def handle_command():
     data = request.json
-    events = json.dumps(data['events'])
+    commands = json.dumps(data['commands'])
     timestamp = data['timestamp']
     is_repetitive = int(data.get('is_repetitive', False))  # Convert boolean to integer
 
     conn = get_db_connection()
-    conn.execute('INSERT INTO events (events, is_repetitive, timestamp) VALUES (?, ?, ?)',
-                 (events, is_repetitive, timestamp))
+    conn.execute('INSERT INTO commands (commands, is_repetitive, timestamp) VALUES (?, ?, ?)',
+                 (commands, is_repetitive, timestamp))
     conn.commit()
     conn.close()
 
-    # Convert is_repetitive back to boolean before passing to update_events
-    manager.update_events(json.loads(events), is_repetitive=bool(is_repetitive))
+    # Convert is_repetitive back to boolean before passing to update_commands
+    manager.update_commands(json.loads(commands), is_repetitive=bool(is_repetitive))
 
-    return jsonify({"status": "success", "message": "Command received and saved"}), 200
+    return jsonify({"status": "success", "message": "Set data received and saved"}), 200
 
 @flask.route('/get_data', methods=['GET'])
 def get_data():
     conn = get_db_connection()
-    entry = conn.execute('SELECT * FROM events ORDER BY id DESC LIMIT 1').fetchone()
+    entry = conn.execute('SELECT * FROM commands ORDER BY id DESC LIMIT 1').fetchone()
     conn.close()    
     
     if entry:
         data = {
-            "events": json.loads(entry['events']),
+            "commands": json.loads(entry['commands']),
             "timestamp": entry['timestamp']
         }
     else:
         data = {"message": "No data found"}
     
     return jsonify({"status": "success", "data": data}), 200
+
+@flask.route('/stop', methods=['POST'])
+def stop():
+    manager.stop()
+    return jsonify({"status": "success", "message": "BeaconManager stopped"}), 200
+
+def start():
+    manager.start()
+    return jsonify({"status": "success", "message": "BeaconManager started"}), 200
 
 @flask.route('/ping', methods=['GET'])
 def ping():
@@ -88,10 +97,11 @@ def get_logs():
     logs = cursor.fetchall()
     conn.close()
     
-    return jsonify({"status": "success", "logs": [dict(log) for log in logs]}), 200
+    formatted_logs = [f"{log['id']}-{log['timestamp']}-{log['level']}-{log['message']}" for log in logs]
+    return jsonify({"status": "success", "logs": formatted_logs}), 200
 
 if __name__ == '__main__':
     init_db()  # Initialize the database
-    load_and_process_latest_events()
-
+    load_and_process_latest_commands()
+    
     flask.run(host='0.0.0.0', port=2345)

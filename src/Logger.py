@@ -56,6 +56,8 @@ class Logger:
 
     def log_to_db(self, level, message):
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        print(f"Logging to db: {timestamp} - {level} - {message}")
+        
         with self.get_db_connection() as conn:
             conn.execute('INSERT INTO logs (timestamp, level, message) VALUES (?, ?, ?)',
                          (timestamp, level, message))
@@ -80,66 +82,3 @@ class Logger:
     def critical(self, message):
         self.logger.critical(message)
         self.log_to_db('CRITICAL', message)
-
-
-
-
-
-
-
-# import logging
-# from datetime import datetime
-
-# class Logger:
-
-#    # Set the logger name and log file as constants
-#     LOGGER_NAME = 'BeaconSimulatorLogger'
-#     LOG_FILE = 'BeaconSimulator.log'
-    
-
-
-
-#     def __init__(self, conn=None, level=logging.INFO):
-#         if not self._initialized and conn:
-#             self.logger = logging.getLogger(self.LOGGER_NAME)
-#             self.logger.setLevel(level)
-
-#             # Setup the file handler
-#             file_handler = logging.FileHandler(self.LOG_FILE)
-#             file_handler.setLevel(level)
-
-#             formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-#             file_handler.setFormatter(formatter)
-
-#             self.logger.addHandler(file_handler)
-
-#             self.db_conn = conn
-#             self._initialized = True
-
-#     def log_to_db(self, level, message):
-#         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-#         insert_sql = 'INSERT INTO logs (timestamp, level, message) VALUES (?, ?, ?)'
-#         self.db_conn.execute(insert_sql, (timestamp, level, message))
-#         self.db_conn.commit()
-
-#   # Each of these methods now also logs to the database
-#     def debug(self, message):
-#         self.logger.debug(message)
-#         self.log_to_db('DEBUG', message)
-
-#     def info(self, message, is_db=False):
-#         self.logger.info(message)
-#         if is_db:
-#             self.log_to_db('INFO', message)
-
-#     def warning(self, message):
-#         self.logger.warning(message)
-#         self.log_to_db('WARNING', message)
-
-#     def error(self, message):
-#         self.logger.error(message)
-#         self.log_to_db('ERROR', message)
-
-#     def critical(self, message):
-#         self.logger.critical(message)
-#         self.log_to_db('CRITICAL', message)
