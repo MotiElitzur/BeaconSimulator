@@ -4,6 +4,7 @@ import json
 import os
 from BeaconManager import BeaconManager
 from Logger import Logger
+from datetime import datetime
 
 flask = Flask(__name__)
 
@@ -98,7 +99,8 @@ def get_logs():
     conn.close()
     
     formatted_logs = [f"{log['id']}-{log['timestamp']}-{log['level']}-{log['message']}" for log in logs]
-    return jsonify({"status": "success", "logs": formatted_logs}), 200
+    currTime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return jsonify({"status": f"success current time {currTime}", "logs": formatted_logs}), 200
 
 if __name__ == '__main__':
     init_db()  # Initialize the database
