@@ -102,6 +102,14 @@ def get_logs():
     currTime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     return jsonify({"status": f"success current time {currTime}", "logs": formatted_logs}), 200
 
+@flask.route('/clear_logs', methods=['POST'])
+def clear_logs():
+    conn = get_db_connection()
+    conn.execute('DELETE FROM logs')
+    conn.commit()
+    conn.close()
+    return jsonify({"status": "success", "message": "Logs cleared"}), 200
+
 if __name__ == '__main__':
     init_db()  # Initialize the database
     load_and_process_latest_commands()

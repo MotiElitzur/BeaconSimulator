@@ -42,7 +42,7 @@ class BeaconManager:
                             subprocess.run('sudo hciconfig hci0 leadv 3', shell=True, check=True)
 
                             result = subprocess.run(full_command, shell=True, check=True, stderr=subprocess.PIPE)
-                            Logger().info(f"Changing mac executed successfully. {result}")
+                            # Logger().info(f"Changing mac executed successfully. {result}")
                         except subprocess.CalledProcessError as e:
                             Logger().error(f"Failed to execute command: {e}\nSTDERR: {e.stderr.decode()}")
 
@@ -59,10 +59,11 @@ class BeaconManager:
                         subprocess.run('sudo hciconfig hci0 leadv 3', shell=True, check=True)
 
                     else:
-                        Logger().error("Unknown command type.")
-                        time.sleep(duration)
+                        Logger().error(f"Unknown command type {command.get('type')}")
+                        self.commands_updated.wait(duration)
 
                 if not self.is_repetitive:
+                    Logger().info("BeaconManager received non-repetitive commands, breaking the loop")
                     break  # Exit the outer loop if not repetitive, ending the command processing
 
 
