@@ -47,8 +47,8 @@ def load_and_process_latest_commands():
 def handle_command():
     data = request.json
     commands = json.dumps(data['commands'])
-    timestamp = data['timestamp']
-    is_repetitive = int(data.get('is_repetitive', False))  # Convert boolean to integer
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    is_repetitive = int(data.get('is_repetitive', True))  # Convert boolean to integer
 
     conn = get_db_connection()
     conn.execute('INSERT INTO commands (commands, is_repetitive, timestamp) VALUES (?, ?, ?)',

@@ -42,32 +42,35 @@ class BeaconManager:
                             subprocess.run('sudo hciconfig hci0 leadv 3', shell=True, check=True)
 
                             result = subprocess.run(full_command, shell=True, check=True, stderr=subprocess.PIPE)
+                            Logger().info(f"Changing mac to {mac_address} for {duration} seconds")
+
                             # Logger().info(f"Changing mac executed successfully. {result}")
                         except subprocess.CalledProcessError as e:
                             Logger().error(f"Failed to execute command: {e}\nSTDERR: {e.stderr.decode()}")
 
-                        Logger().info(f"Changing mac to {mac_address} and waiting for {duration} seconds")
-                        time.sleep(duration)
+                        # time.sleep(duration)
 
                     elif command.get('type') == 'break':
                         # Turning Bluetooth off
                         Logger().info(f"Breaking command. Turning off Bluetooth for {duration} seconds...")
                         subprocess.run('sudo hciconfig hci0 down', shell=True, check=True)
-                        time.sleep(duration)
-                        # Turning Bluetooth back on
-                        subprocess.run('sudo hciconfig hci0 up', shell=True, check=True)
-                        subprocess.run('sudo hciconfig hci0 leadv 3', shell=True, check=True)
+                        # time.sleep(duration)
+                        # # Turning Bluetooth back on
+                        # subprocess.run('sudo hciconfig hci0 up', shell=True, check=True)
+                        # subprocess.run('sudo hciconfig hci0 leadv 3', shell=True, check=True)
 
                     else:
                         Logger().error(f"Unknown command type {command.get('type')}")
-                        self.commands_updated.wait(duration)
-
-                if not self.is_repetitive:
-                    Logger().info("BeaconManager received non-repetitive commands, breaking the loop")
-                    break  # Exit the outer loop if not repetitive, ending the command processing
+                        # self.commands_updated.wait(duration)
 
 
-    def update_commands(self, new_commands, is_repetitive=False):
+                    if self.commands_updated.wait(timeout=duration):
+                        self.commands_updated.clear()
+                        self.logger.info("New commands received, stopping current operation., during sleep time.")
+                        break  # Exit current comman
+
+
+    def update_commands(self, new_commands, is_repetitive=True):
         # Update the commands and the is_repetitive flag here
         Logger().info(f"BeaconManager updating commands, new commands size: {len(new_commands)}, is_repetitive: {is_repetitive}")
 
