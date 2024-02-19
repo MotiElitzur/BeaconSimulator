@@ -40,9 +40,6 @@ cd "$PATH_TO_FOLDER"
 # Make the all files executable
 chmod -R +x "./"
 
-# Terminate any currently running instances of the Python script
-#killall -9 $PYTHON_SCRIPT_NAME
-
 # Create a Python virtual environment
 python3 -m venv venv
 
@@ -52,16 +49,18 @@ source venv/bin/activate
 # Upgrade pip itself
 pip install --upgrade pip
 
-# Install dependencies from requirements.txt              TODO: Uncomment this line if its already installed because it will take a long time to install
+# Install dependencies from requirements.txt
 pip install -r requirements.txt
 
 #clear the old cron jobs
 crontab -r
 
 # Add a cron job to run the Python script at reboot
-echo "@reboot python3 $PATH_TO_PYTHON_SCRIPT >> $PATH_TO_FOLDER/$FOLDER_NAME.log 2>&1" | crontab -
+echo "@reboot python3 $PATH_TO_PYTHON_SCRIPT >> $PATH_TO_FOLDER/startup.log 2>&1" | crontab -
 
 # List the cron jobs
 crontab -l
 
 EOF
+
+sshpass -p "$RASPBERRY_PI_USER" ssh "$RASPBERRY_PI_USER@$RASPBERRY_PI_IP" "sudo reboot"

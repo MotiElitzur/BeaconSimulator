@@ -3,11 +3,13 @@ from datetime import datetime
 import sqlite3
 import os
 
-DATABASE = os.path.join(os.path.dirname(__file__), 'database.db')
+# Ensure the directory for the database and log files exists
+BASE_DIR = os.path.dirname(__file__)
+DATABASE = os.path.join(BASE_DIR, 'database.db')
 
 class Logger:
     LOGGER_NAME = 'BeaconSimulatorLogger'
-    LOG_FILE = 'BeaconSimulator.log'
+    LOG_FILE = os.path.join(BASE_DIR, 'BeaconSimulator.log')
 
     _instance = None  # Holds the singleton instance
 

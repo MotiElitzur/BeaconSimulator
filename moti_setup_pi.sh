@@ -70,4 +70,7 @@ crontab -l
 # Run the Python script immediately and redirect output to the log file
 # nohup python3 $PATH_TO_PYTHON_SCRIPT >> $PATH_TO_FOLDER/$FOLDER_NAME.log 2>&1 &
 
+# Reboot the pi
+sudo reboot
+
 EOF
