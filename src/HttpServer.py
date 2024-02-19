@@ -88,7 +88,7 @@ def start():
 
 @flask.route('/ping', methods=['GET'])
 def ping():
-    return jsonify({"status": "success", "message": "Server is alive"}), 200
+    return jsonify({"status": "success", "message": f"Server is alive current mac address {manager.current_mac_address}"}), 200
 
 @flask.route('/logs', methods=['GET'])
 def get_logs():

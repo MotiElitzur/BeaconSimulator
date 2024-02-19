@@ -9,10 +9,13 @@ class BeaconManager:
 
     def __init__(self, is_repetitive=False):
         self._commands = None
+        self.is_repetitive = is_repetitive
+        self.current_mac_address = None
+
         self.commands_updated = Event()
-        self.is_repetitive = is_repetitive  # New attribute to control repetition
 
         self._thread = Thread(target=self.run, args=())
+        self._thread.daemon = True  # Daemonize thread
         self._thread.start()
 
     def run(self):
@@ -20,17 +23,22 @@ class BeaconManager:
         while True:
             Logger().info("BeaconManager start waiting for commands...")
             self.commands_updated.wait()  # Wait until commands are updated
-            self.commands_updated.clear()  # Reset the command flag after receiving commands
+            self.commands_updated.clear()  # Reset the command flag after receiving commands.
 
             Logger().info("BeaconManager received new commands")
 
             while True:  # Outer loop for handling repetition
+
+                if self._commands is None:  # Check if there are commands to process
+                    subprocess.run('sudo hciconfig hci0 down', shell=True, check=True)
+                    break  # Exit the loop if no commands are set, and return to waiting state.
+
                 for command in self._commands:
                     duration = command.get('duration', 0)  # Using a consistent name for duration
 
                     if command.get('type') == 'mac_change':
-                        mac_address = command['mac_address']
-                        beacon_mac_as_bytes = mac_address.replace(":", " ")
+                        self.current_mac_address = command['mac_address']
+                        beacon_mac_as_bytes = self.current_mac_address.replace(":", " ")
                         command_start = "sudo hcitool -i hci0 cmd 0x08 0x0008 1E 02 01 04 03 03 9A FE 16 16 9A FE 20 00 0A DA 64 00 00 00 00 05 "  # Adjusted to include a more generic company identifier
                         command_end = " BB BB BB"
                         full_command = command_start + beacon_mac_as_bytes + command_end
@@ -42,19 +50,19 @@ class BeaconManager:
                             subprocess.run('sudo hciconfig hci0 leadv 3', shell=True, check=True)
 
                             result = subprocess.run(full_command, shell=True, check=True, stderr=subprocess.PIPE)
-                            Logger().info(f"Changing mac to {mac_address} for {duration} seconds")
-
+                            Logger().info(f"Changing mac to {self.current_mac_address} for {duration} seconds")
                             # Logger().info(f"Changing mac executed successfully. {result}")
                         except subprocess.CalledProcessError as e:
                             Logger().error(f"Failed to execute command: {e}\nSTDERR: {e.stderr.decode()}")
 
-                        # time.sleep(duration)
 
                     elif command.get('type') == 'break':
                         # Turning Bluetooth off
                         Logger().info(f"Breaking command. Turning off Bluetooth for {duration} seconds...")
                         subprocess.run('sudo hciconfig hci0 down', shell=True, check=True)
-                        # time.sleep(duration)
+                        self.current_mac_address = "BREAK"
+
+
                         # # Turning Bluetooth back on
                         # subprocess.run('sudo hciconfig hci0 up', shell=True, check=True)
                         # subprocess.run('sudo hciconfig hci0 leadv 3', shell=True, check=True)
@@ -77,3 +85,8 @@ class BeaconManager:
         self._commands = new_commands
         self.is_repetitive = is_repetitive  # Update the repetitive flag based on new input
         self.commands_updated.set()  # Notify the run method that commands have been updated
+
+    def stop(self):
+        Logger().info("BeaconManager stopp called")
+        self._commands = None
+        self.commands_updated.set()
