@@ -110,6 +110,11 @@ def clear_logs():
     conn.close()
     return jsonify({"status": "success", "message": "Logs cleared"}), 200
 
+@flask.route('/reboot', methods=['POST'])
+def reboot():
+    os.system("sudo reboot")
+    return jsonify({"status": "success", "message": "Rebooting"}), 200
+
 if __name__ == '__main__':
     init_db()  # Initialize the database
     load_and_process_latest_commands()

@@ -30,6 +30,7 @@ class BeaconManager:
             while True:  # Outer loop for handling repetition
 
                 if self._commands is None:  # Check if there are commands to process
+                    Logger().info("No commands to process, waiting for new commands...")
                     subprocess.run('sudo hciconfig hci0 down', shell=True, check=True)
                     break  # Exit the loop if no commands are set, and return to waiting state.
 
@@ -53,7 +54,7 @@ class BeaconManager:
                             Logger().info(f"Changing mac to {self.current_mac_address} for {duration} seconds")
                             # Logger().info(f"Changing mac executed successfully. {result}")
                         except subprocess.CalledProcessError as e:
-                            Logger().error(f"Failed to execute command: {e}\nSTDERR: {e.stderr.decode()}")
+                            Logger().error(f"Failed to execute change mac command: {e}")
 
 
                     elif command.get('type') == 'break':
