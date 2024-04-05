@@ -48,11 +48,14 @@ class BeaconManager:
                         try:
                             subprocess.run('sudo hciconfig hci0 down', shell=True, check=True)
                             subprocess.run('sudo hciconfig hci0 up', shell=True, check=True)  # Ensure Bluetooth is on
-                            subprocess.run('sudo hciconfig hci0 leadv 3', shell=True, check=True)
+                            # subprocess.run('sudo hciconfig hci0 leadv 3', shell=True, check=True)
 
-                            result = subprocess.run(full_command, shell=True, check=True, stderr=subprocess.PIPE)
+                            # Execute the command to change the MAC address
+                            subprocess.run(full_command, shell=True, check=True, stderr=subprocess.PIPE)
                             Logger().info(f"Changing mac to {self.current_mac_address} for {duration} seconds")
-                            # Logger().info(f"Changing mac executed successfully. {result}")
+
+                            # Execute the command to change the advertisement interval
+                            self.set_advertisement_interval(command.get('interval', 100))
                         except subprocess.CalledProcessError as e:
                             Logger().error(f"Failed to execute change mac command: {e}")
 
@@ -91,3 +94,20 @@ class BeaconManager:
         Logger().info("BeaconManager stopp called")
         self._commands = None
         self.commands_updated.set()
+
+    def set_advertisement_interval(self, interval_ms):
+        # Convert milliseconds to 0.625ms units
+        interval_units = int(interval_ms / 0.625)
+        # Convert to hexadecimal and format to little-endian
+        interval_hex = format(interval_units, '04x')
+        min_interval = interval_hex[2:4] + " " + interval_hex[0:2]  # Little-endian format
+        max_interval = min_interval  # Using the same interval for min and max for simplicity
+        changeIntervalCommand = f"sudo hcitool -i hci0 cmd 0x08 0x0006 {min_interval} {max_interval} 00 00 00 00 00 00 00 00 00 07 00"
+
+        try:
+            subprocess.run(changeIntervalCommand, shell=True, check=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+            subprocess.run('sudo hcitool -i hci0 cmd 0x08 0x000A 01', shell=True, check=True)
+            subprocess.run('sudo hciconfig hci0 noscan', shell=True, check=True)
+            Logger().info(f"Advertisement interval set to {interval_ms}ms.")
+        except subprocess.CalledProcessError as e:
+            Logger().error(f"Failed to set advertisement interval to {interval_ms}: {e}")
