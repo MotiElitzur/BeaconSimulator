@@ -55,7 +55,7 @@ class BeaconManager:
                             Logger().info(f"Changing mac to {self.current_mac_address} for {duration} seconds")
 
                             # Execute the command to change the advertisement interval
-                            self.set_advertisement_interval(command.get('interval', 100))
+                            self.set_advertisement_interval(command.get('interval', 800))
                         except subprocess.CalledProcessError as e:
                             Logger().error(f"Failed to execute change mac command: {e}")
 
