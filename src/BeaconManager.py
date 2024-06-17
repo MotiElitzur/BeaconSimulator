@@ -108,6 +108,6 @@ class BeaconManager:
             subprocess.run(changeIntervalCommand, shell=True, check=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
             subprocess.run('sudo hcitool -i hci0 cmd 0x08 0x000A 01', shell=True, check=True)
             subprocess.run('sudo hciconfig hci0 noscan', shell=True, check=True)
-            Logger().info(f"Advertisement interval set to {interval_ms}ms.")
+            self.logger.info(f"Advertisement interval set to {interval_ms}ms.")
         except subprocess.CalledProcessError as e:
-            Logger().error(f"Failed to set advertisement interval to {interval_ms}: {e}")
+            self.logger.error(f"Failed to set advertisement interval to {interval_ms}: {e}")

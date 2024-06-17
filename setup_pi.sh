@@ -64,3 +64,5 @@ crontab -l
 EOF
 
 sshpass -p "$RASPBERRY_PI_USER" ssh "$RASPBERRY_PI_USER@$RASPBERRY_PI_IP" "sudo reboot"
+
+echo "The Setup is complete. The Raspberry Pi will reboot now. Please wait for the Raspberry Pi to come back online and then run the http commands" 
