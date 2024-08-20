@@ -1,11 +1,25 @@
 #!/bin/bash
 
+# Function to determine the Raspberry Pi IP
+# Please note that sometimes the Raspberry Pi name ends with .local (e.g., moti.local), 
+# while other times it does not (e.g., moti). This applies to Postman commands as well."
+get_raspberry_pi_ip() {
+    local ip="$RASPBERRY_PI_USER.local"
+    # Try to ping the .local address
+    if ping -c 1 "$ip" &> /dev/null; then
+        echo "$ip"
+    else
+        echo "$RASPBERRY_PI_USER" # Use the fallback IP or other method
+    fi
+}
+
 # Variables
 # Ask the user for Raspberry Pi username
 echo "Please enter the Raspberry Pi username:"
 read RASPBERRY_PI_USER
 
-RASPBERRY_PI_IP="$RASPBERRY_PI_USER.local"
+# Get the Raspberry Pi IP using the function
+RASPBERRY_PI_IP=$(get_raspberry_pi_ip)
 
 FOLDER_NAME='BeaconSimulator'
 PYTHON_FOLDER_NAME='src'
@@ -33,6 +47,8 @@ sshpass -p "$RASPBERRY_PI_USER" ssh -o StrictHostKeyChecking=no "$RASPBERRY_PI_U
 
 # Update the raspberry pi, and remove unnecessary packages if any
 sudo apt update && sudo apt upgrade && sudo apt autoremove
+
+sudo apt-get install bluetooth bluez
 
 # Navigate to the project directory
 cd "$PATH_TO_FOLDER"
@@ -63,6 +79,7 @@ crontab -l
 
 EOF
 
+RASPBERRY_PI_IP=$(get_raspberry_pi_ip)  # Re-evaluate the IP to ensure it's up-to-date
 sshpass -p "$RASPBERRY_PI_USER" ssh "$RASPBERRY_PI_USER@$RASPBERRY_PI_IP" "sudo reboot"
 
 echo "The Setup is complete. The Raspberry Pi will reboot now. Please wait for the Raspberry Pi to come back online and then run the http commands" 

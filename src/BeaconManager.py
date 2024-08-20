@@ -2,10 +2,14 @@ import time
 from threading import Thread, Event
 from Logger import Logger
 import subprocess
+# import re
 
 class BeaconManager:
 
     logger = Logger()
+
+    def is_valid_mac(mac):
+        return re.match("[0-9a-f]{2}([-:]?)[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$", mac.lower())
 
     def __init__(self, is_repetitive=False):
         self._commands = None
@@ -39,6 +43,7 @@ class BeaconManager:
 
                     if command.get('type') == 'mac_change':
                         self.current_mac_address = command['mac_address']
+
                         beacon_mac_as_bytes = self.current_mac_address.replace(":", " ")
                         command_start = "sudo hcitool -i hci0 cmd 0x08 0x0008 1E 02 01 04 03 03 9A FE 16 16 9A FE 20 00 0A DA 64 00 00 00 00 05 "  # Adjusted to include a more generic company identifier
                         command_end = " BB BB BB"
@@ -47,6 +52,9 @@ class BeaconManager:
                         # Execute the full command
                         try:
                             subprocess.run('sudo hciconfig hci0 down', shell=True, check=True)
+
+                            # Change the raspberry pi's mac address itself, very important
+                            subprocess.run(f'sudo btmgmt --index 0 public-addr {self.current_mac_address}', shell=True, check=True)  
                             subprocess.run('sudo hciconfig hci0 up', shell=True, check=True)  # Ensure Bluetooth is on
                             # subprocess.run('sudo hciconfig hci0 leadv 3', shell=True, check=True)
 
