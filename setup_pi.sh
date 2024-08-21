@@ -4,9 +4,14 @@
 # Please note that sometimes the Raspberry Pi name ends with .local (e.g., moti.local), 
 # while other times it does not (e.g., moti). This applies to Postman commands as well."
 get_raspberry_pi_ip() {
+
+    # local ip="192.168.128.36"
+    # echo "$ip"
+
+
     local ip="$RASPBERRY_PI_USER.local"
     # Try to ping the .local address
-    if ping -c 1 "$ip" &> /dev/null; then
+    if dscacheutil -q host -a name "$ip" &> /dev/null; then
         echo "$ip"
     else
         echo "$RASPBERRY_PI_USER" # Use the fallback IP or other method
@@ -28,6 +33,8 @@ TARGET_PATH_ON_PI="/home/$RASPBERRY_PI_USER/"
 PATH_TO_FOLDER="$TARGET_PATH_ON_PI$FOLDER_NAME"
 PATH_TO_PYTHON_SCRIPT="$PATH_TO_FOLDER/$PYTHON_FOLDER_NAME/HttpServer.py"
 
+echo "The Raspberry Pi full ssh adress is $RASPBERRY_PI_USER@$RASPBERRY_PI_IP"
+
 # Make the Python script executable for local use
 chmod -R +x "."
 
@@ -48,7 +55,7 @@ sshpass -p "$RASPBERRY_PI_USER" ssh -o StrictHostKeyChecking=no "$RASPBERRY_PI_U
 # Update the raspberry pi, and remove unnecessary packages if any
 sudo apt update && sudo apt upgrade && sudo apt autoremove
 
-sudo apt-get install bluetooth bluez
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -y bluetooth bluez
 
 # Navigate to the project directory
 cd "$PATH_TO_FOLDER"
