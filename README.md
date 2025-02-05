@@ -1,82 +1,123 @@
-# BeaconSimulator
+# Beacon Simulator
 
-Please note that sometimes the Raspberry Pi name ends with .local (e.g., moti.local), 
-while other times it does not (e.g., moti). This applies to Postman commands as well."
+A powerful and flexible Bluetooth Low Energy (BLE) beacon simulator designed to run on Raspberry Pi. This project allows you to programmatically control and simulate BLE beacons with customizable MAC addresses, advertisement intervals, and timing sequences.
 
+## 🌟 Features
 
-// fixing ssh name not working, run it inside the raaspberipy, this example is for bb, replace with your name
-#!/bin/bash
+- **Dynamic MAC Address Control**: Ability to change beacon MAC addresses on the fly
+- **Flexible Advertisement Intervals**: Customizable beacon advertisement timing
+- **RESTful API Interface**: HTTP endpoints for remote control and monitoring
+- **Persistent Storage**: SQLite database for command history and logging
+- **Robust Logging System**: Comprehensive logging with database integration
+- **Auto-start on Boot**: Automatic service initialization on Raspberry Pi startup
 
-# Function to run commands and display output
-run_cmd() {
-    echo "Running: $1"
-    eval "$1"
-    echo "Command completed with exit status: $?"
-    echo "---"
+## 🛠️ Prerequisites
+
+- Raspberry Pi (with Bluetooth capability)
+- Python 3.x
+- Bluetooth and Bluez packages
+- Network connectivity
+
+## 📦 Installation
+
+1. Clone the repository:
+```bash
+git clone [repository-url] BeaconSimulator
+cd BeaconSimulator
+```
+
+2. Run the setup script:
+```bash
+./setup_pi.sh
+```
+The setup script will:
+- Install required system packages
+- Set up Python virtual environment
+- Install Python dependencies
+- Configure autostart on boot
+- Set up necessary permissions
+
+## 🚀 Usage
+
+### API Endpoints
+
+#### Set Beacon Commands
+```http
+POST /set_data
+Content-Type: application/json
+
+{
+    "commands": [
+        {
+            "type": "mac_change",
+            "mac_address": "00:11:22:33:44:55",
+            "duration": 30,
+            "interval": 800
+        },
+        {
+            "type": "break",
+            "duration": 10
+        }
+    ],
+    "is_repetitive": true
 }
+```
 
-echo "Starting mDNS fix script at $(date)"
+#### Get Current Status
+```http
+GET /get_data
+```
 
-# Remove the IP-based entry from /etc/hosts
-run_cmd "sudo sed -i '/^192.168.128.36/d' /etc/hosts"
+#### Other Available Endpoints
+- `GET /ping` - Check server status
+- `GET /logs` - Retrieve system logs
+- `POST /clear_logs` - Clear log history
+- `POST /stop` - Stop beacon simulation
+- `POST /reboot` - Reboot the Raspberry Pi
 
-# Ensure correct localhost entries in /etc/hosts
-run_cmd "sudo sed -i '1i127.0.0.1\tlocalhost' /etc/hosts"
-run_cmd "sudo sed -i '2i::1\t\tlocalhost ip6-localhost ip6-loopback' /etc/hosts"
+### System Architecture
 
-# Ensure correct hostname entry in /etc/hosts
-run_cmd "sudo sed -i 's/^127.0.1.1.*/127.0.1.1\tbb/' /etc/hosts"
+The project consists of several key components:
 
-# Add mdns4 to nsswitch.conf if not present
-run_cmd "grep -q 'mdns4' /etc/nsswitch.conf || sudo sed -i '/^hosts:/ s/$/ mdns4/' /etc/nsswitch.conf"
+- **BeaconManager**: Core class managing BLE beacon operations
+- **HttpServer**: Flask-based REST API server
+- **Logger**: Singleton logger with database integration
 
-# Restart Avahi daemon
-run_cmd "sudo systemctl restart avahi-daemon"
+## 📝 Logging
 
-# Check hostname
-run_cmd "hostname"
+The system maintains logs in two formats:
+1. File-based logs (`BeaconSimulator.log`)
+2. SQLite database entries (accessible via API)
 
-# Check /etc/hosts
-run_cmd "cat /etc/hosts"
+## ⚙️ Configuration
 
-# Check nsswitch.conf
-run_cmd "cat /etc/nsswitch.conf | grep hosts"
+The server runs on port 2345 by default. Configuration can be modified in the following files:
+- `HttpServer.py` - Server settings
+- `BeaconManager.py` - Beacon configuration
+- `Logger.py` - Logging preferences
 
-# Check Avahi status
-run_cmd "sudo systemctl status avahi-daemon"
+## 🔒 Security Notes
 
-# Test mDNS resolution
-run_cmd "avahi-resolve -n bb.local"
-run_cmd "getent hosts bb.local"
+- Ensure proper network security as the service runs with sudo privileges
+- Consider implementing authentication for production environments
+- Review and adjust file permissions as needed
 
-echo "mDNS fix script completed at $(date)"
-echo "Please reboot your Raspberry Pi with 'sudo reboot'"
-echo "After reboot, try connecting from your Mac with 'ssh bb@bb.local'"
+## 🐛 Troubleshooting
 
-// fix locale
-sudo bash -c '
-locale-gen en_US.UTF-8
-echo "LANG=en_US.UTF-8\nLC_ALL=en_US.UTF-8" > /etc/default/locale
-sed -i "/en_US.UTF-8/s/^# //g" /etc/locale.gen
-locale-gen
-update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
-echo "export LANG=en_US.UTF-8\nexport LC_ALL=en_US.UTF-8" >> /root/.bashrc
-echo "export LANG=en_US.UTF-8\nexport LC_ALL=en_US.UTF-8" >> /home/bb/.bashrc
-apt-get install --reinstall locales -y
-apt-get install language-pack-en -y
-'
-source ~/.bashrc
+1. If the beacon is not advertising:
+   - Check Bluetooth service status
+   - Verify hci0 interface is up
+   - Review system logs
 
-echo "=== Locale Settings ==="
-locale
-echo "\n=== Available Locales ==="
-locale -a
-echo "\n=== /etc/default/locale contents ==="
-cat /etc/default/locale
-echo "\n=== Relevant lines from /etc/locale.gen ==="
-grep "en_US.UTF-8" /etc/locale.gen
-echo "\n=== Relevant lines from ~/.bashrc ==="
-tail -n 2 ~/.bashrc
-echo "\n=== Locale-related environment variables ==="
-env | grep -E "LANG|LC_"
-sudo reboot
+2. If the server is not responding:
+   - Check if the service is running
+   - Verify network connectivity
+   - Review startup logs
+
+## 📜 License
+
+[License Type] - See LICENSE file for details
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
